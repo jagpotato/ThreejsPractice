@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>=^.^=</title>
+<style>
+body{margin: 0;padding: 0; background: #000;}
+canvas{display: block;}
+a{
+  color: #0080ff;
+}
+.info{
+  color: #fff;
+  text-align: center;
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px;
+}
+</style>
+
+</head>
+<body>
+<script src="js/three.min.js"></script>
+<script src="js/OrbitControls.js"></script>
+<!-- <script src="js/test1.js"></script> -->
+<div class="info">
+  <!-- <button onclick="fadeAction( 'default' );">default</button>
+  <button onclick="fadeAction( 'jump' );">jump</button>
+  <button onclick="fadeAction( 'putLeftHand' );">putLeftHand</button>
+  <button onclick="fadeAction( 'walk' );">walk</button> -->
+  <button onclick="fadeAction( 'Default' );">Default</button>
+  <!-- <button onclick="fadeAction( 'Top1_2' );">Top1_2</button>
+  <button onclick="fadeAction( 'Top1_3' );">Top1_3</button>
+  <button onclick="fadeAction( 'Top4_1' );">Top4_1</button>
+  <button onclick="fadeAction( 'Top4_6' );">Top4_6</button> -->
+  <button onclick="fadeAction( 'Top1_5' );">Top1_5</button>
+  <button onclick="fadeAction( 'Top2_6' );">Top2_6</button>
+</div>
+
+<script>
+
+"use strict";
+
+var width, height, clock, scene, camera, renderer;
+var grid;
+var orbitControls;
+var keyControls = {
+  shake: false
+};
+var loader = new THREE.JSONLoader();
+var ambientLight, mesh, action = {}, mixer, fadeAction;
+var x = 0, count = 0;
+
+width  = window.innerWidth;
+height = window.innerHeight;
+clock  = new THREE.Clock();
+scene  = new THREE.Scene();
+camera = new THREE.PerspectiveCamera( 70, width / height, 1, 100 );
+camera.position.set( 0, 1, 5 );
+grid = new THREE.GridHelper(50, 25);
+grid.position.set(0, 0, 0);
+scene.add(grid);
+renderer = new THREE.WebGLRenderer();
+renderer.setSize( width, height );
+orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+orbitControls.autoRotate = true;
+orbitControls.autoRotateSpeed = 0;
+document.body.appendChild( renderer.domElement );
+
+ambientLight = new THREE.AmbientLight( 0xffffff );
+scene.add( ambientLight );
+
+document.addEventListener('keydown', onKeyDown, false);
+document.addEventListener('keyup', onKeyUp, false);
+
+loader.load( 'model/lesson6.json', function( geometry, materials ) {
+
+  materials.forEach( function ( material ) {
+
+    material.skinning = true;
+
+  } );
+
+  mesh = new THREE.SkinnedMesh(
+    geometry,
+    new THREE.MeshFaceMaterial( materials )
+  );
+  mesh.position.set(0, 0, 0);
+
+  mixer  = new THREE.AnimationMixer( mesh );
+
+  // action.Default  = mixer.clipAction(geometry.animations[0]);
+  // action.Top1_2 = mixer.clipAction(geometry.animations[1]);
+  // action.Top1_3 = mixer.clipAction(geometry.animations[2]);
+  // action.Top4_1 = mixer.clipAction(geometry.animations[3]);
+  // action.Top4_6 = mixer.clipAction(geometry.animations[4]);
+
+  action.Default  = mixer.clipAction(geometry.animations[0]);
+  action.Top1_5 = mixer.clipAction(geometry.animations[1]);
+  action.Top2_6 = mixer.clipAction(geometry.animations[2]);
+
+  // action.Default.setEffectiveWeight(1);
+  // action.Top1_2.setEffectiveWeight(1);
+  // action.Top1_3.setEffectiveWeight(1);
+  // action.Top4_1.setEffectiveWeight(1);
+  // action.Top4_6.setEffectiveWeight(1);
+
+  action.Default.setEffectiveWeight(1);
+  action.Top1_5.setEffectiveWeight(1);
+  action.Top2_6.setEffectiveWeight(1);
+
+  // action.Top1_2.setLoop(THREE.LoopOnce, 0);    // 1回だけ
+  // action.Top1_3.setLoop(THREE.LoopOnce, 0);
+  // action.Top4_1.setLoop(THREE.LoopOnce, 0);
+  // action.Top4_6.setLoop(THREE.LoopOnce, 0);
+  // action.Top1_2.clampWhenFinished = true;      // 初期位置に戻らない
+  // action.Top1_3.clampWhenFinished = true;
+  // action.Top4_1.clampWhenFinished = true;
+  // action.Top4_6.clampWhenFinished = true;
+
+  action.Top1_5.setLoop(THREE.LoopOnce, 0);    // 1回だけ
+  action.Top2_6.setLoop(THREE.LoopOnce, 0);
+  action.Top1_5.clampWhenFinished = true;      // 初期位置に戻らない
+  action.Top2_6.clampWhenFinished = true;
+
+  action.Default.play();
+
+  scene.add( mesh );
+
+} );
+
+
+fadeAction = function () {
+  var activeActionName = 'Default';
+
+  return function ( name ) {
+
+    var from = action[ activeActionName ].play();
+    var to   = action[ name ].play();
+
+    from.enabled = true;
+    to.enabled = true;
+
+    from.crossFadeTo( to, .3 );
+    activeActionName = name;
+
+  }
+
+}();
+
+function onKeyDown ( event ) {
+  event.stopPropagation();
+  switch( event.keyCode ) {
+    case 32: /*space*/
+      keyControls.shake = true;
+      rotationCube('x', '+');
+      console.log(x, mesh.position);
+      break;
+    case 39: /*right*/
+      keyControls.shake = true;
+      rotationCube('x', '+');
+      console.log(x, mesh.position);
+      break;
+    case 37: /*left*/
+      keyControls.shake = true;
+      rotationCube('x', '-');
+      console.log(x, mesh.position);
+      break;
+  }
+}
+
+function onKeyUp ( event ) {
+  event.stopPropagation();
+  switch( event.keyCode ) {
+    case 32: /*space*/
+      keyControls.shake = false;
+      break;
+  }
+}
+
+function rotationCube(axis, sign) {
+  if ( x >= 2 ) { x = 0; }
+  if ( mesh.position.y < 0 ) { mesh.position.y = 0; }
+  else if ( mesh.position.y > ( Math.sqrt(2) - 1 ) ) { mesh.position.y = ( Math.sqrt(2) - 1 ); }
+  switch( axis ) {
+    case 'x':
+    if ( sign === '+' ) {
+      if ( mesh.position.y >= 0 && x >= 0 && x <= 2) {
+        mesh.rotation.z -= 0.05 * (Math.PI / 4);
+        mesh.position.x += 0.05;
+        x += 0.05;
+        mesh.position.y = ((1 - Math.sqrt(2)) * Math.pow(x - 1, 2)) + (Math.sqrt(2) - 1);
+      }
+    } else if ( sign === '-' ) {
+      if ( mesh.position.y >= 0 && x >= 0 && x <= 2) {
+        mesh.rotation.z += 0.05 * (Math.PI / 4);
+        mesh.position.x -= 0.05;
+        x += 0.05;
+        mesh.position.y = ((1 - Math.sqrt(2)) * Math.pow(x - 1, 2)) + (Math.sqrt(2) - 1);
+      }
+    }else {}
+    break;
+    case 'y':
+    break;
+    case 'z':
+    if ( sign === '+' ) {
+      if ( mesh.position.y >= 0 && x >= 0 && x <= 2) {
+        mesh.rotation.x += 0.05 * (Math.PI / 4);
+        mesh.position.z += 0.05;
+        x += 0.05;
+        mesh.position.y = ((1 - Math.sqrt(2)) * Math.pow(x - 1, 2)) + (Math.sqrt(2) - 1);
+      }
+    } else if ( sign === '-' ) {
+      if ( mesh.position.y >= 0 && x >= 0 && x <= 2) {
+        mesh.rotation.x -= 0.05 * (Math.PI / 4);
+        mesh.position.z -= 0.05;
+        x += 0.05;
+        mesh.position.y = ((1 - Math.sqrt(2)) * Math.pow(x - 1, 2)) + (Math.sqrt(2) - 1);
+      }
+    } else {}
+    break;
+  }
+}
+
+( function update () {
+  // console.log(keyControls);
+  requestAnimationFrame( update );
+  if ( mesh ) {
+    console.log(mesh.position);
+  }
+
+  // if ( mesh ) {
+  //   switch ( count ) {
+  //     case 0: rotationCube('x', '+'); break;
+  //     case 1: rotationCube('x', '-'); break;
+  //     case 2: rotationCube('z', '+'); break;
+  //     case 3: rotationCube('z', '-'); break;
+  //   }
+  //   if ( x >= 2 ) {
+  //     x = 0;
+  //     mesh.position.y = 0;
+  //     if ( count < 3 ) {
+  //       count++;
+  //     } else {
+  //       count = 0;
+  //     }
+  //   }
+  // }
+
+  var delta = clock.getDelta();
+  var theta = clock.getElapsedTime();
+
+  if ( mixer ) { mixer.update( delta ); }
+
+  renderer.render( scene, camera );
+  orbitControls.update();
+
+} )();
+
+</script>
+
+</body>
+</html>
